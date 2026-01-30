@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,30 +25,36 @@ from schemas.movies import (
     LanguageSchema
 )
 
-
 router = APIRouter()
 
 
 @router.get("/movies/", response_model=MovieListResponseSchema)
 async def list_movies(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=20),
-    db: AsyncSession = Depends(get_db)
+        request: Request,
+        page: int = Query(1, ge=1),
+        per_page: int = Query(10, ge=1, le=20),
+        db: AsyncSession = Depends(get_db)
 ):
     total_items = await db.scalar(select(func.count(MovieModel.id)))
     total_pages = (total_items + per_page - 1) // per_page
     if page > total_pages and total_pages != 0:
         raise HTTPException(status_code=404, detail="No movies found.")
+
     offset = (page - 1) * per_page
     result = await db.execute(
-        select(MovieModel).order_by(MovieModel.id.desc()).offset(offset).limit(per_page)
+        select(MovieModel)
+        .order_by(MovieModel.id.desc())
+        .offset(offset)
+        .limit(per_page)
     )
     movies = result.scalars().all()
     if not movies:
         raise HTTPException(status_code=404, detail="No movies found.")
-    base_url = "/movies/"
-    prev_page = f"{base_url}?page={page-1}&per_page={per_page}" if page > 1 else None
-    next_page = f"{base_url}?page={page+1}&per_page={per_page}" if page < total_pages else None
+
+    base_url = str(request.url_for("list_movies"))
+    prev_page = f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
+    next_page = f"{base_url}?page={page + 1}&per_page={per_page}" if page < total_pages else None
+
     return MovieListResponseSchema(
         movies=[MovieListItemSchema(
             id=m.id,
@@ -72,6 +78,7 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
         db.add(country)
         await db.commit()
         await db.refresh(country)
+
     genres = []
     for g in movie_in.genres:
         genre = await db.scalar(select(GenreModel).where(GenreModel.name == g))
@@ -81,6 +88,7 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
             await db.commit()
             await db.refresh(genre)
         genres.append(genre)
+
     actors = []
     for a in movie_in.actors:
         actor = await db.scalar(select(ActorModel).where(ActorModel.name == a))
@@ -90,6 +98,7 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
             await db.commit()
             await db.refresh(actor)
         actors.append(actor)
+
     languages = []
     for language in movie_in.languages:
         lang = await db.scalar(select(LanguageModel).where(LanguageModel.name == language))
@@ -99,6 +108,7 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
             await db.commit()
             await db.refresh(lang)
         languages.append(lang)
+
     movie = MovieModel(
         name=movie_in.name,
         date=movie_in.date,
@@ -112,6 +122,7 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
         actors=actors,
         languages=languages
     )
+
     db.add(movie)
     try:
         await db.commit()
@@ -122,6 +133,7 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
             detail=f"A movie with the name '{movie_in.name}' and release date '{movie_in.date}' already exists."
         )
     await db.refresh(movie)
+
     return MovieDetailSchema(
         id=movie.id,
         name=movie.name,
@@ -157,6 +169,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = result.scalar_one_or_none()
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+
     return MovieDetailSchema(
         id=movie.id,
         name=movie.name,
