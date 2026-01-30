@@ -15,7 +15,7 @@ class Settings(BaseAppSettings):
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "test_user")
     POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "test_password")
     POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
-    POSTGRES_PORT: int = int(os.getenv("POSTGRES_PORT", 5432))
+    POSTGRES_DB_PORT: int = int(os.getenv("POSTGRES_DB_PORT", 5432))
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "test_db")
 
 
@@ -23,7 +23,7 @@ class TestingSettings(Settings):
     POSTGRES_USER: str = "test_user"
     POSTGRES_PASSWORD: str = "test_password"
     POSTGRES_HOST: str = "localhost"
-    POSTGRES_PORT: int = 5432
+    POSTGRES_DB_PORT: int = 5432
     POSTGRES_DB: str = "test_db"
 
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
