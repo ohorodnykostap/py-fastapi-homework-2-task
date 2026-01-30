@@ -5,7 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from typing import Optional
 
-from database import get_db, MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel
+from database.session_postgresql import get_db
+from database.models import (
+    MovieModel,
+    CountryModel,
+    GenreModel,
+    ActorModel,
+    LanguageModel
+)
 from schemas.movies import (
     MovieDetailSchema,
     MovieListResponseSchema,
@@ -17,6 +24,7 @@ from schemas.movies import (
     ActorSchema,
     LanguageSchema
 )
+
 
 router = APIRouter()
 
