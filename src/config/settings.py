@@ -20,6 +20,11 @@ class Settings(BaseAppSettings):
 
 
 class TestingSettings(Settings):
+    POSTGRES_USER: str = "test_user"
+    POSTGRES_PASSWORD: str = "test_password"
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_DB: str = "test_db"
 
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
         object.__setattr__(self, 'PATH_TO_DB', ":memory:")
