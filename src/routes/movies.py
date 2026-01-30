@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from typing import Optional
 
-from database.session_postgresql import get_db
+from database import get_db
 from database.models import (
     MovieModel,
     CountryModel,
@@ -76,8 +76,6 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
     if not country:
         country = CountryModel(code=movie_in.country)
         db.add(country)
-        await db.commit()
-        await db.refresh(country)
 
     genres = []
     for g in movie_in.genres:
@@ -85,8 +83,6 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
         if not genre:
             genre = GenreModel(name=g)
             db.add(genre)
-            await db.commit()
-            await db.refresh(genre)
         genres.append(genre)
 
     actors = []
@@ -95,20 +91,18 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
         if not actor:
             actor = ActorModel(name=a)
             db.add(actor)
-            await db.commit()
-            await db.refresh(actor)
         actors.append(actor)
 
+    # Мови
     languages = []
     for language in movie_in.languages:
         lang = await db.scalar(select(LanguageModel).where(LanguageModel.name == language))
         if not lang:
             lang = LanguageModel(name=language)
             db.add(lang)
-            await db.commit()
-            await db.refresh(lang)
         languages.append(lang)
 
+    # Фільм
     movie = MovieModel(
         name=movie_in.name,
         date=movie_in.date,

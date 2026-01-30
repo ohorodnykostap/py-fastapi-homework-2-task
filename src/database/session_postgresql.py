@@ -49,6 +49,3 @@ async def get_postgresql_db_contextmanager() -> AsyncGenerator[AsyncSession, Non
     """
     async with AsyncPostgresqlSessionLocal() as session:
         yield session
-
-
-get_db = get_postgresql_db
