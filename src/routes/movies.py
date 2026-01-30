@@ -11,7 +11,11 @@ from schemas.movies import (
     MovieListResponseSchema,
     MovieListItemSchema,
     MovieCreateSchema,
-    MovieUpdateSchema
+    MovieUpdateSchema,
+    CountrySchema,
+    GenreSchema,
+    ActorSchema,
+    LanguageSchema
 )
 
 router = APIRouter()
@@ -79,10 +83,10 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
             await db.refresh(actor)
         actors.append(actor)
     languages = []
-    for l in movie_in.languages:
-        lang = await db.scalar(select(LanguageModel).where(LanguageModel.name == l))
+    for language in movie_in.languages:
+        lang = await db.scalar(select(LanguageModel).where(LanguageModel.name == language))
         if not lang:
-            lang = LanguageModel(name=l)
+            lang = LanguageModel(name=language)
             db.add(lang)
             await db.commit()
             await db.refresh(lang)
@@ -126,7 +130,7 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
         ),
         genres=[GenreSchema(id=g.id, name=g.name) for g in movie.genres],
         actors=[ActorSchema(id=a.id, name=a.name) for a in movie.actors],
-        languages=[LanguageSchema(id=l.id, name=l.name) for l in movie.languages]
+        languages=[LanguageSchema(id=lang.id, name=lang.name) for lang in movie.languages]
     )
 
 
@@ -161,7 +165,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
         ),
         genres=[GenreSchema(id=g.id, name=g.name) for g in movie.genres],
         actors=[ActorSchema(id=a.id, name=a.name) for a in movie.actors],
-        languages=[LanguageSchema(id=l.id, name=l.name) for l in movie.languages]
+        languages=[LanguageSchema(id=lang.id, name=lang.name) for lang in movie.languages]
     )
 
 
