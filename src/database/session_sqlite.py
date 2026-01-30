@@ -11,10 +11,12 @@ settings = get_settings()
 
 SQLITE_DATABASE_URL = f"sqlite+aiosqlite:///{settings.PATH_TO_DB}"
 sqlite_engine = create_async_engine(SQLITE_DATABASE_URL, echo=False)
+
 AsyncSQLiteSessionLocal = sessionmaker(  # type: ignore
     bind=sqlite_engine,
     class_=AsyncSession,
-    expire_on_commit=False
+    autoflush=False,
+    expire_on_commit=False,
 )
 
 
@@ -59,3 +61,7 @@ async def reset_sqlite_database() -> None:
     async with sqlite_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+
+
+get_db_contextmanager = get_sqlite_db_contextmanager
+reset_database = reset_sqlite_database
